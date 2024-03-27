@@ -1,41 +1,63 @@
 package config
 
-import (
-	"log"
+import "os"
 
-	"github.com/spf13/viper"
-)
+type AWSConfig struct {
+	AccessKey       string
+	SecretAccessKey string
+}
 
 type DatabaseConfig struct {
-	Host     string `mapstructure:"DB_HOST"`
-	Port     string `mapstructure:"DB_PORT"`
-	User     string `mapstructure:"DB_USER"`
-	Password string `mapstructure:"DB_PASSWORD"`
-	Name     string `mapstructure:"DB_NAME"`
+	Host     string
+	Port     string
+	User     string
+	Password string
+	Name     string
 }
 
 type HTTPConfig struct {
-	Port string `mapstructure:"HTTP_PORT"`
+	Port string
 }
 
 type S3Config struct {
-	BucketName string `mapstructure:"S3_BUCKET"`
-	Region     string `mapstructure:"REGION"`
+	BucketName string
+	Region     string
 }
 
 type AppConfig struct {
+	AWS      AWSConfig
 	Database DatabaseConfig
 	HTTP     HTTPConfig
 	S3       S3Config
 }
 
 func NewAppConfig() *AppConfig {
-	viper.AutomaticEnv()
-
-	var appConfig AppConfig
-	if err := viper.Unmarshal(&appConfig); err != nil {
-		log.Fatalf("Unable to decode into struct, %v", err)
+	awsConfig := AWSConfig{
+		AccessKey:       os.Getenv("AWS_ACCESS_KEY"),
+		SecretAccessKey: os.Getenv("AWS_SECRET_ACCESS_KEY"),
 	}
 
-	return &appConfig
+	dbConfig := DatabaseConfig{
+		Host:     os.Getenv("DB_HOST"),
+		Port:     os.Getenv("DB_PORT"),
+		User:     os.Getenv("DB_USER"),
+		Password: os.Getenv("DB_PASSWORD"),
+		Name:     os.Getenv("DB_NAME"),
+	}
+
+	httpConfig := HTTPConfig{
+		Port: os.Getenv("HTTP_PORT"),
+	}
+
+	S3Config := S3Config{
+		BucketName: os.Getenv("S3_BUCKET"),
+		Region:     os.Getenv("REGION"),
+	}
+
+	return &AppConfig{
+		AWS:      awsConfig,
+		Database: dbConfig,
+		HTTP:     httpConfig,
+		S3:       S3Config,
+	}
 }

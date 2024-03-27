@@ -1,0 +1,21 @@
+package routes
+
+import (
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+
+	"github.com/Zeta-Manu/manu-lesson/internal/adapters/db"
+	"github.com/Zeta-Manu/manu-lesson/internal/adapters/s3"
+	"github.com/Zeta-Manu/manu-lesson/internal/api/controllers"
+	"github.com/Zeta-Manu/manu-lesson/internal/repositories"
+)
+
+func InitVideoRoutes(router *gin.Engine, logger *zap.Logger, dbAdapter *db.Database, s3Adapter *s3.S3Adapter) {
+	videoRepo := repositories.NewVideoRepository(dbAdapter, s3Adapter)
+	quizController := controllers.NewVideoController(logger, videoRepo)
+	quiz := router.Group("/api/video")
+	{
+		quiz.GET("/:id", quizController.Get)
+		quiz.POST("/", quizController.Post)
+	}
+}

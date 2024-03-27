@@ -2,7 +2,7 @@ package application
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,9 +12,15 @@ import (
 	"github.com/gin-contrib/cors"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
 
 	"github.com/Zeta-Manu/manu-lesson/config"
+	docs "github.com/Zeta-Manu/manu-lesson/docs"
+	"github.com/Zeta-Manu/manu-lesson/internal/adapters/db"
+	"github.com/Zeta-Manu/manu-lesson/internal/adapters/s3"
+	"github.com/Zeta-Manu/manu-lesson/internal/api/routes"
 )
 
 func NewApplication(cfg config.AppConfig) {
@@ -32,12 +38,27 @@ func NewApplication(cfg config.AppConfig) {
 		c.JSON(200, gin.H{"message": "healthy"})
 	})
 
-	startServer(cfg, router, logger)
+	dbAdapter, err := db.InitializeDatabase(cfg.Database)
+	if err != nil {
+		log.Fatalf("Failed to connect to the database: %v", err)
+	}
+	s3Adapter, err := s3.NewS3Adapter(cfg.AWS.AccessKey, cfg.AWS.SecretAccessKey, cfg.S3.BucketName, cfg.S3.Region)
+	if err != nil {
+		log.Fatalf("Failed to connect to S3: %v", err)
+	}
+
+	docs.SwaggerInfo.BasePath = "/api"
+
+	routes.InitQuizRoutes(router, logger, dbAdapter)
+	routes.InitVideoRoutes(router, logger, dbAdapter, s3Adapter)
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+
+	startServer(router, logger)
 }
 
-func startServer(cfg config.AppConfig, handler http.Handler, logger *zap.Logger) {
+func startServer(handler http.Handler, logger *zap.Logger) {
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%v", cfg.HTTP.Port),
+		Addr:    ":8080",
 		Handler: handler,
 	}
 

@@ -1,0 +1,25 @@
+services:
+  app:
+    build: .
+    env_file:
+      - .env
+    container_name: manu-lesson
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/app
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    container_name: lesson-db
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: lesson
+    ports:
+     - "3306:3306"
+
+networks:
+  default:
+    driver: bridge

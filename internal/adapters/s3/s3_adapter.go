@@ -1,7 +1,9 @@
 package s3
 
 import (
+	"bytes"
 	"context"
+	"io"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -27,9 +29,32 @@ func NewS3Adapter(accessKey, secretAccessKey, bucketName, region string) (*S3Ada
 }
 
 func (s *S3Adapter) GetObject(key string) ([]byte, error) {
-	return nil, nil
+	input := &s3.GetObjectInput{
+		Bucket: &s.bucketName,
+		Key:    &key,
+	}
+
+	resp, err := s.client.GetObject(context.Background(), input)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
 }
 
 func (s *S3Adapter) PutObject(key string, data []byte) error {
-	return nil
+	input := &s3.PutObjectInput{
+		Bucket: &s.bucketName,
+		Key:    &key,
+		Body:   bytes.NewReader(data),
+	}
+
+	_, err := s.client.PutObject(context.Background(), input)
+	return err
 }
