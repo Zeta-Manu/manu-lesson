@@ -39,10 +39,7 @@ run-docker:
 stop-docker:
 	docker compose down
 
-rebuild-docker: 
-	stop-docker
-	build-docker
-	run-docker
+rebuild-docker: stop-docker build-docker run-docker
 
 swag: 
 	swag init -g cmd/main.go 

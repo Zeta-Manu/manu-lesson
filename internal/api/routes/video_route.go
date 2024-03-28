@@ -12,10 +12,11 @@ import (
 
 func InitVideoRoutes(router *gin.Engine, logger *zap.Logger, dbAdapter *db.Database, s3Adapter *s3.S3Adapter) {
 	videoRepo := repositories.NewVideoRepository(dbAdapter, s3Adapter)
-	quizController := controllers.NewVideoController(logger, videoRepo)
+	videoController := controllers.NewVideoController(logger, videoRepo)
 	quiz := router.Group("/api/video")
 	{
-		quiz.GET("/:id", quizController.Get)
-		quiz.POST("/", quizController.Post)
+		quiz.GET("/:id", videoController.Get)
+		quiz.GET("/", videoController.List)
+		quiz.POST("/", videoController.Post)
 	}
 }

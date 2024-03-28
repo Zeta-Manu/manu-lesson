@@ -3,6 +3,8 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -14,18 +16,33 @@ type Database struct {
 }
 
 // NewDatabase creates a new MySQL database connection.
-func NewDatabase(dataSourceName string) (*Database, error) {
-	db, err := sql.Open("mysql", dataSourceName)
-	if err != nil {
-		return nil, err
+func NewDatabase(dataSourceName string, maxAttempts int, backoff time.Duration) (*Database, error) {
+	var db *sql.DB
+	var err error
+
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		db, err = sql.Open("mysql", dataSourceName)
+		if err != nil {
+			if attempt == maxAttempts {
+				return nil, err
+			}
+			time.Sleep(backoff)
+			continue
+		}
+
+		// Check if the database connection is alive
+		if err := db.Ping(); err != nil {
+			if attempt == maxAttempts {
+				return nil, err
+			}
+			time.Sleep(backoff)
+			continue
+		}
+
+		return &Database{Conn: db}, nil
 	}
 
-	// Check if the database connection is alive
-	if err := db.Ping(); err != nil {
-		return nil, err
-	}
-
-	return &Database{Conn: db}, nil
+	return nil, fmt.Errorf("failed to connect to database after %d attempts", maxAttempts)
 }
 
 // InitializeDatabase initializes and returns a new database connection.
@@ -38,7 +55,10 @@ func InitializeDatabase(dbConfig config.DatabaseConfig) (*Database, error) {
 		dbConfig.Port,
 		dbConfig.Name,
 	)
-	return NewDatabase(dbDataSourceName)
+	log.Print(dbDataSourceName)
+	maxAttempts := 5
+	backoff := 10 * time.Second
+	return NewDatabase(dbDataSourceName, maxAttempts, backoff)
 }
 
 // Close closes the database connection.
