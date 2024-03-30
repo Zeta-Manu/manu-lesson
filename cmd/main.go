@@ -5,7 +5,7 @@ import (
 	"github.com/Zeta-Manu/manu-lesson/internal/application"
 )
 
-// @title Manu Swagger API
+// @title Manu-Lesson Swagger API
 // @version 1.0
 // @description server
 

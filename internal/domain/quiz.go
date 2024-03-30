@@ -1,9 +1,9 @@
 package domain
 
 type QuizQuestion struct {
-	Question string
-	Answer   string
-	ID       int
+	Question string `json:"question"`
+	Answer   string `json:"answer"`
+	ID       int    `json:"id" binding:"required"`
 }
 
 type QuizQuestionWithVideo struct {

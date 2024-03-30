@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -17,6 +18,7 @@ type IQuizController interface {
 	Get(c *gin.Context)
 	Post(c *gin.Context)
 	List(c *gin.Context)
+	Update(c *gin.Context)
 }
 
 type QuizController struct {
@@ -38,6 +40,7 @@ func NewQuizController(logger *zap.Logger, repo *repositories.QuizRepository) *Q
 // @Produce json
 // @Param id path int true "Quiz ID"
 // @Success 200
+// @Failure 404
 // @Router /quiz/{id} [get]
 func (qc *QuizController) Get(c *gin.Context) {
 	id := c.Param("id")
@@ -55,18 +58,20 @@ func (qc *QuizController) Get(c *gin.Context) {
 // @Tags quiz
 // @Accept json
 // @Produce json
-// @Param quiz body domain.Quiz true "Create quiz"
+// @Param req body domain.Quiz true "Create quiz"
 // @Success 201
+// @Failure 400
+// @Failure 500
 // @Router /quiz [post]
 func (qc *QuizController) Post(c *gin.Context) {
-	var quiz domain.Quiz
-	if err := c.BindJSON(&quiz); err != nil {
+	var req domain.Quiz
+	if err := c.BindJSON(&req); err != nil {
 		qc.logger.Error("Bad Request", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	err := qc.repo.PostQuizQuestion(quiz.Question, quiz.Answer)
+	err := qc.repo.PostQuizQuestion(req.Question, req.Answer)
 	if err != nil {
 		qc.logger.Error("Error", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -83,6 +88,7 @@ func (qc *QuizController) Post(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Success 200
+// @Failure 500
 // @Router /quiz [get]
 func (qc *QuizController) List(c *gin.Context) {
 	quizes, err := qc.repo.GetAllQuestions()
@@ -94,4 +100,31 @@ func (qc *QuizController) List(c *gin.Context) {
 
 	qc.logger.Info("Get", zap.String(fmt.Sprintf("%d", len(quizes)), "quizes"))
 	c.JSON(http.StatusOK, gin.H{"data": quizes})
+}
+
+// @Summary Update the quiz
+// @Description Update the existing quiz
+// @Tags quiz
+// @Accept json
+// @Produce json
+// @Param req body domain.QuizQuestion true "Answer and Question is optional"
+// @Success 200 {string} string "success"
+// @Failure 500 {object} string "Internal Server Error"
+// @Router /quiz [put]
+func (qc *QuizController) Update(c *gin.Context) {
+	var req domain.QuizQuestion
+	if err := c.BindJSON(&req); err != nil {
+		qc.logger.Error("Bad Request", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := qc.repo.UpdateQuizQuestion(strconv.Itoa(req.ID), &req.Question, &req.Answer)
+	if err != nil {
+		qc.logger.Error("Failed to update the quiz table", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.Status(http.StatusOK)
 }

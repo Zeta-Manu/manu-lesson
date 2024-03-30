@@ -17,5 +17,6 @@ func InitQuizRoutes(router *gin.Engine, logger *zap.Logger, dbAdapter *db.Databa
 		quiz.GET("/:id", quizController.Get)
 		quiz.GET("/", quizController.List)
 		quiz.POST("/", quizController.Post)
+		quiz.PUT("/", quizController.Update)
 	}
 }

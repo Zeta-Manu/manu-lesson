@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"bytes"
+
 	"github.com/Zeta-Manu/manu-lesson/internal/adapters/db"
 	"github.com/Zeta-Manu/manu-lesson/internal/adapters/s3"
 	"github.com/Zeta-Manu/manu-lesson/internal/domain"
@@ -10,7 +12,7 @@ var _ IVideoRepository = &VideoRepository{}
 
 type IVideoRepository interface {
 	GetVideo(id string) (*domain.Video, error)
-	PostVideo(key string, file []byte) error
+	PostVideo(folderPath string, key string, file []byte) error
 	GetAllVideo() ([]*domain.Video, error)
 }
 
@@ -47,11 +49,27 @@ func (repo *VideoRepository) GetVideo(id string) (*domain.Video, error) {
 	return &video, nil
 }
 
-func (repo *VideoRepository) PostVideo(key string, file []byte) error {
-	err := repo.s3Adpter.PutObject(key, file)
+func (repo *VideoRepository) PostVideo(folderPath string, key string, file []byte) error {
+	fullObjectKey := folderPath + "/" + key
+
+	// Convert the byte slice to an io.Reader
+	fileReader := bytes.NewReader(file)
+
+	err := repo.s3Adpter.UploadFile(fullObjectKey, fileReader)
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (repo *VideoRepository) InsertVideoInfo(handsign string, url string) error {
+	query := "INSERT INTO video (handsign, url) VALUES (?, ?)"
+
+	_, err := repo.dbAdapter.Exec(query, handsign, url)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

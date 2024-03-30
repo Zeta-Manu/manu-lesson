@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 
+	"github.com/Zeta-Manu/manu-lesson/config"
 	"github.com/Zeta-Manu/manu-lesson/internal/repositories"
 )
 
@@ -21,12 +22,14 @@ type IVideoController interface {
 type VideoController struct {
 	logger *zap.Logger
 	repo   *repositories.VideoRepository
+	cdn    string
 }
 
-func NewVideoController(logger *zap.Logger, repo *repositories.VideoRepository) *VideoController {
+func NewVideoController(logger *zap.Logger, repo *repositories.VideoRepository, cloudFront *config.CloudFrontConfig) *VideoController {
 	return &VideoController{
 		logger: logger,
 		repo:   repo,
+		cdn:    cloudFront.Domain,
 	}
 }
 
@@ -58,6 +61,7 @@ func (vc *VideoController) Get(c *gin.Context) {
 // @Produce json
 // @Param file formData file true "Video file"
 // @Param key formData string true "Unique key for the video"
+// @Param handsign formData string true "Handsign contain in the video"
 // @Success 200
 // @Failure 400
 // @Failure 500
@@ -65,12 +69,28 @@ func (vc *VideoController) Get(c *gin.Context) {
 func (vc *VideoController) Post(c *gin.Context) {
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
+		vc.logger.Error("Failed to retrived file", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to get file"})
+		return
+	}
+
+	key := c.PostForm("key")
+	if key == "" {
+		vc.logger.Error("Failed to retrived key", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Key is required"})
+		return
+	}
+
+	handsign := c.PostForm("handsign")
+	if handsign == "" {
+		vc.logger.Error("Failed to retrived handsign", zap.Error(err))
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Handsign is required"})
 		return
 	}
 
 	file, err := fileHeader.Open()
 	if err != nil {
+		vc.logger.Error("Cannot open the file", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to open file"})
 		return
 	}
@@ -79,25 +99,29 @@ func (vc *VideoController) Post(c *gin.Context) {
 	// Read the file content into a byte slice
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
+		vc.logger.Error("Cannot read the file", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read file"})
 		return
 	}
 
-	key := c.PostForm("key")
-	if key == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Key is required"})
-		return
-	}
+	const (
+		FOLDERNAME = "lesson"
+	)
 
-	err = vc.repo.PostVideo(key, fileBytes)
+	err = vc.repo.PostVideo(FOLDERNAME, key, fileBytes)
 	if err != nil {
-		// Instead of sending two separate JSON responses, combine the error and data into one JSON object
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload video"})
+		vc.logger.Error("Cannot upload to S3", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload the file"})
 		return
 	}
 
-	// If the upload is successful, you can return the data as part of the JSON response
-	url := "mock-url" // This should be the actual URL of the uploaded file
+	url := vc.cdn + "/lesson/" + key
+	err = vc.repo.InsertVideoInfo(handsign, url)
+	if err != nil {
+		vc.logger.Error("Cannot insert into video table: ", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert to the table"})
+	}
+
 	c.JSON(http.StatusOK, gin.H{"data": url})
 }
 

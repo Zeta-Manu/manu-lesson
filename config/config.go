@@ -7,6 +7,10 @@ type AWSConfig struct {
 	SecretAccessKey string
 }
 
+type CloudFrontConfig struct {
+	Domain string
+}
+
 type DatabaseConfig struct {
 	Host     string
 	Port     string
@@ -25,16 +29,21 @@ type S3Config struct {
 }
 
 type AppConfig struct {
-	AWS      AWSConfig
-	Database DatabaseConfig
-	HTTP     HTTPConfig
-	S3       S3Config
+	AWS        AWSConfig
+	CloudFront CloudFrontConfig
+	Database   DatabaseConfig
+	HTTP       HTTPConfig
+	S3         S3Config
 }
 
 func NewAppConfig() *AppConfig {
 	awsConfig := AWSConfig{
 		AccessKey:       os.Getenv("AWS_ACCESS_KEY"),
 		SecretAccessKey: os.Getenv("AWS_SECRET_ACCESS_KEY"),
+	}
+
+	cloudFrontConfig := CloudFrontConfig{
+		Domain: os.Getenv("CLOUDFRONT_DOMAIN"),
 	}
 
 	dbConfig := DatabaseConfig{
@@ -55,9 +64,10 @@ func NewAppConfig() *AppConfig {
 	}
 
 	return &AppConfig{
-		AWS:      awsConfig,
-		Database: dbConfig,
-		HTTP:     httpConfig,
-		S3:       S3Config,
+		AWS:        awsConfig,
+		CloudFront: cloudFrontConfig,
+		Database:   dbConfig,
+		HTTP:       httpConfig,
+		S3:         S3Config,
 	}
 }

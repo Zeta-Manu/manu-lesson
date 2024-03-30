@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"fmt"
+
 	"github.com/Zeta-Manu/manu-lesson/internal/adapters/db"
 	"github.com/Zeta-Manu/manu-lesson/internal/domain"
 )
@@ -77,4 +79,32 @@ func (repo *QuizRepository) GetAllQuestions() ([]*domain.QuizQuestion, error) {
 	}
 
 	return quizQuestions, nil
+}
+
+func (repo *QuizRepository) UpdateQuizQuestion(id string, question *string, answer *string) error {
+	query := "UPDATE quiz SET "
+	args := make([]interface{}, 0)
+
+	if question != nil {
+		query += "question = ?,"
+		args = append(args, *question)
+	}
+	if answer != nil {
+		query += "answer = ?,"
+		args = append(args, *answer)
+	}
+
+	if question != nil && answer != nil {
+		query = query[:len(query)-1]
+	}
+
+	query += " WHERE id = ?"
+	args = append(args, id)
+
+	_, err := repo.dbAdapter.Exec(query, args...)
+	if err != nil {
+		return fmt.Errorf("failed to update quiz %v query %v", id, query)
+	}
+
+	return nil
 }

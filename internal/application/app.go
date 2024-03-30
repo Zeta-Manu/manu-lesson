@@ -50,7 +50,7 @@ func NewApplication(cfg config.AppConfig) {
 	docs.SwaggerInfo.BasePath = "/api"
 
 	routes.InitQuizRoutes(router, logger, dbAdapter)
-	routes.InitVideoRoutes(router, logger, dbAdapter, s3Adapter)
+	routes.InitVideoRoutes(router, logger, dbAdapter, s3Adapter, cfg.CloudFront)
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	startServer(router, logger)

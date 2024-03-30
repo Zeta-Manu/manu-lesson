@@ -28,10 +28,50 @@ const docTemplate = `{
                     "quiz"
                 ],
                 "summary": "List all quizzes",
-                "operationId": "list-quizzes",
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            },
+            "put": {
+                "description": "Update the existing quiz",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "quiz"
+                ],
+                "summary": "Update the quiz",
+                "parameters": [
+                    {
+                        "description": "Answer and Question is optional",
+                        "name": "req",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/domain.QuizQuestion"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "success",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             },
@@ -47,11 +87,10 @@ const docTemplate = `{
                     "quiz"
                 ],
                 "summary": "Create a new quiz",
-                "operationId": "create-quiz",
                 "parameters": [
                     {
                         "description": "Create quiz",
-                        "name": "quiz",
+                        "name": "req",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -62,6 +101,12 @@ const docTemplate = `{
                 "responses": {
                     "201": {
                         "description": "Created"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -79,7 +124,6 @@ const docTemplate = `{
                     "quiz"
                 ],
                 "summary": "Get a quiz by ID",
-                "operationId": "get-quiz-by-id",
                 "parameters": [
                     {
                         "type": "integer",
@@ -92,6 +136,9 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
                     }
                 }
             }
@@ -136,6 +183,13 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Unique key for the video",
                         "name": "key",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Handsign contain in the video",
+                        "name": "handsign",
                         "in": "formData",
                         "required": true
                     }
@@ -197,6 +251,23 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "domain.QuizQuestion": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "answer": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "question": {
+                    "type": "string"
+                }
+            }
         }
     }
 }`
@@ -207,7 +278,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/api",
 	Schemes:          []string{},
-	Title:            "Manu Swagger API",
+	Title:            "Manu-Lesson Swagger API",
 	Description:      "server",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
