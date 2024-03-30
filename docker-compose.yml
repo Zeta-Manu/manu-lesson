@@ -1,6 +1,6 @@
 services:
   app:
-    build: .
+    build: ./deployment/Dockerfile.dev
     env_file:
       - .env
     container_name: manu-lesson
