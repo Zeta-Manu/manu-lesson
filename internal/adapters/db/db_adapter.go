@@ -3,7 +3,6 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -55,7 +54,6 @@ func InitializeDatabase(dbConfig config.DatabaseConfig) (*Database, error) {
 		dbConfig.Port,
 		dbConfig.Name,
 	)
-	log.Print(dbDataSourceName)
 	maxAttempts := 5
 	backoff := 10 * time.Second
 	return NewDatabase(dbDataSourceName, maxAttempts, backoff)

@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Build the application for production
-RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/app
+RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd
 
 # Use a smaller Alpine-based image for production
 FROM alpine:3.18
