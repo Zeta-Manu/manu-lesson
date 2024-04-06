@@ -71,7 +71,7 @@ func (qc *QuizController) Post(c *gin.Context) {
 		return
 	}
 
-	err := qc.repo.PostQuizQuestion(req.Question, req.Answer)
+	err := qc.repo.PostQuizQuestion(req.Question, req.Answer, req.VideoURL)
 	if err != nil {
 		qc.logger.Error("Error", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -119,7 +119,7 @@ func (qc *QuizController) Update(c *gin.Context) {
 		return
 	}
 
-	err := qc.repo.UpdateQuizQuestion(strconv.Itoa(req.ID), &req.Question, &req.Answer)
+	err := qc.repo.UpdateQuizQuestion(strconv.Itoa(req.ID), &req.Question, &req.Answer, req.VideoURL)
 	if err != nil {
 		qc.logger.Error("Failed to update the quiz table", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

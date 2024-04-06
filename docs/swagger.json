@@ -243,6 +243,9 @@
                 },
                 "question": {
                     "type": "string"
+                },
+                "videoURL": {
+                    "type": "string"
                 }
             }
         },
@@ -259,6 +262,9 @@
                     "type": "integer"
                 },
                 "question": {
+                    "type": "string"
+                },
+                "videoURL": {
                     "type": "string"
                 }
             }

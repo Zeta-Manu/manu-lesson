@@ -249,6 +249,9 @@ const docTemplate = `{
                 },
                 "question": {
                     "type": "string"
+                },
+                "videoURL": {
+                    "type": "string"
                 }
             }
         },
@@ -265,6 +268,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "question": {
+                    "type": "string"
+                },
+                "videoURL": {
                     "type": "string"
                 }
             }

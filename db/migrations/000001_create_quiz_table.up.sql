@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS quiz (
   id INT AUTO_INCREMENT PRIMARY KEY,
   question TEXT NOT NULL,
-  answer TEXT NOT NULL
+  answer TEXT NOT NULL,
+  video VARCHAR(255)
 );

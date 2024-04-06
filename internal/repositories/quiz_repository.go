@@ -11,7 +11,7 @@ var _ IQuizRepository = &QuizRepository{}
 
 type IQuizRepository interface {
 	GetQuizQuestion(id string) (*domain.QuizQuestion, error)
-	PostQuizQuestion(quiz string, answer string) error
+	PostQuizQuestion(quiz string, answer string, video *string) error
 	GetAllQuestions() ([]*domain.QuizQuestion, error)
 }
 
@@ -26,7 +26,7 @@ func NewQuizRepository(dbAdapter *db.Database) *QuizRepository {
 }
 
 func (repo *QuizRepository) GetQuizQuestion(id string) (*domain.QuizQuestion, error) {
-	query := "SELECT id, question, answer FROM quiz WHERE id = ?"
+	query := "SELECT id, question, answer, video FROM quiz WHERE id = ?"
 	rows, err := repo.dbAdapter.Query(query, id)
 	if err != nil {
 		return nil, err
@@ -35,10 +35,12 @@ func (repo *QuizRepository) GetQuizQuestion(id string) (*domain.QuizQuestion, er
 
 	var quiz domain.QuizQuestion
 	if rows.Next() {
-		err = rows.Scan(&quiz.ID, &quiz.Question, &quiz.Answer)
+		var videoURL *string
+		err = rows.Scan(&quiz.ID, &quiz.Question, &quiz.Answer, &videoURL)
 		if err != nil {
 			return nil, err
 		}
+		quiz.VideoURL = videoURL
 	} else {
 		return nil, err
 	}
@@ -46,10 +48,10 @@ func (repo *QuizRepository) GetQuizQuestion(id string) (*domain.QuizQuestion, er
 	return &quiz, nil
 }
 
-func (repo *QuizRepository) PostQuizQuestion(quiz string, answer string) error {
-	query := "INSERT INTO quiz (question, answer) VALUES (?, ?)"
+func (repo *QuizRepository) PostQuizQuestion(quiz string, answer string, video *string) error {
+	query := "INSERT INTO quiz (question, answer, video) VALUES (?, ?, ?)"
 
-	_, err := repo.dbAdapter.Exec(query, quiz, answer)
+	_, err := repo.dbAdapter.Exec(query, quiz, answer, video)
 	if err != nil {
 		return err
 	}
@@ -58,7 +60,7 @@ func (repo *QuizRepository) PostQuizQuestion(quiz string, answer string) error {
 }
 
 func (repo *QuizRepository) GetAllQuestions() ([]*domain.QuizQuestion, error) {
-	query := "SELECT id, question, answer FROM quiz"
+	query := "SELECT id, question, answer, video FROM quiz"
 	rows, err := repo.dbAdapter.Query(query)
 	if err != nil {
 		return nil, err
@@ -68,10 +70,12 @@ func (repo *QuizRepository) GetAllQuestions() ([]*domain.QuizQuestion, error) {
 	var quizQuestions []*domain.QuizQuestion
 	for rows.Next() {
 		var quiz domain.QuizQuestion
-		err = rows.Scan(&quiz.ID, &quiz.Question, &quiz.Answer)
+		var videoURL *string
+		err = rows.Scan(&quiz.ID, &quiz.Question, &quiz.Answer, &videoURL)
 		if err != nil {
 			return nil, err
 		}
+		quiz.VideoURL = videoURL
 		quizQuestions = append(quizQuestions, &quiz)
 	}
 	if err = rows.Err(); err != nil {
@@ -81,7 +85,7 @@ func (repo *QuizRepository) GetAllQuestions() ([]*domain.QuizQuestion, error) {
 	return quizQuestions, nil
 }
 
-func (repo *QuizRepository) UpdateQuizQuestion(id string, question *string, answer *string) error {
+func (repo *QuizRepository) UpdateQuizQuestion(id string, question *string, answer *string, video *string) error {
 	query := "UPDATE quiz SET "
 	args := make([]interface{}, 0)
 
@@ -93,8 +97,12 @@ func (repo *QuizRepository) UpdateQuizQuestion(id string, question *string, answ
 		query += "answer = ?,"
 		args = append(args, *answer)
 	}
+	if video != nil {
+		query += "video = ?,"
+		args = append(args, *video)
+	}
 
-	if question != nil && answer != nil {
+	if question != nil || answer != nil || video != nil {
 		query = query[:len(query)-1]
 	}
 

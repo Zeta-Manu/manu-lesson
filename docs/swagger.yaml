@@ -6,6 +6,8 @@ definitions:
         type: string
       question:
         type: string
+      videoURL:
+        type: string
     type: object
   domain.QuizQuestion:
     properties:
@@ -14,6 +16,8 @@ definitions:
       id:
         type: integer
       question:
+        type: string
+      videoURL:
         type: string
     required:
     - id
